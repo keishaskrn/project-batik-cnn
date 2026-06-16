@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Klasifikasi Motif Batik Indonesia | CNN</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --batik-brown : #7B3F00;
+      --batik-gold  : #C8931A;
+      --batik-cream : #FDF6E3;
+      --batik-dark  : #3D1A00;
+    }
+
+    body {
+      background-color: var(--batik-cream);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* ── Navbar ── */
+    .navbar-custom {
+      background: linear-gradient(135deg, var(--batik-dark) 0%, var(--batik-brown) 100%);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .navbar-brand span { color: var(--batik-gold); }
+
+    /* ── Hero ── */
+    .hero-section {
+      background: linear-gradient(135deg, var(--batik-dark) 0%, var(--batik-brown) 60%, var(--batik-gold) 100%);
+      padding: 80px 0 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+    .hero-title {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+    }
+    .hero-subtitle { color: rgba(255,255,255,0.85); font-size: 1.1rem; }
+    .hero-badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+    }
+
+    /* ── Upload Card ── */
+    .upload-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(123, 63, 0, 0.15);
+      border: none;
+      margin-top: -40px;
+      position: relative;
+      z-index: 10;
+    }
+    .upload-zone {
+      border: 3px dashed var(--batik-gold);
+      border-radius: 16px;
+      padding: 50px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #fffdf7;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      background: #fff8e8;
+      border-color: var(--batik-brown);
+      transform: scale(1.01);
+    }
+    .upload-icon {
+      font-size: 3.5rem;
+      color: var(--batik-gold);
+      margin-bottom: 15px;
+    }
+    .preview-img {
+      max-height: 280px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: none;
+    }
+    .btn-predict {
+      background: linear-gradient(135deg, var(--batik-brown), var(--batik-gold));
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      padding: 14px 50px;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(123,63,0,0.35);
+    }
+    .btn-predict:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(123,63,0,0.45);
+      color: #fff;
+    }
+    .btn-predict:disabled { opacity: 0.7; transform: none; }
+
+    /* ── Info Cards ── */
+    .batik-card {
+      border: none;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: transform 0.3s;
+    }
+    .batik-card:hover { transform: translateY(-5px); }
+    .batik-card .card-header {
+      background: linear-gradient(135deg, var(--batik-brown), var(--batik-gold));
+      color: #fff;
+      font-weight: 700;
+      border: none;
+    }
+
+    /* ── Alert model belum siap ── */
+    .alert-model {
+      background: linear-gradient(135deg, #fff3cd, #ffe8a0);
+      border: 2px solid var(--batik-gold);
+      border-radius: 12px;
+      color: var(--batik-dark);
+    }
+
+    /* ── Loading spinner ── */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    #loadingOverlay .spinner-text { color: #fff; margin-top: 16px; font-size: 1.1rem; }
+
+    footer {
+      background: var(--batik-dark);
+      color: rgba(255,255,255,0.7);
+      padding: 24px 0;
+      margin-top: 60px;
+    }
+    footer a { color: var(--batik-gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark navbar-custom">
+  <div class="container">
+    <a class="navbar-brand fw-bold fs-5" href="/">
+      <i class="fas fa-palette me-2"></i>Batik<span>CNN</span>
+    </a>
+    <span class="text-white-50 small">Klasifikasi Motif Batik Indonesia</span>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="container text-center position-relative">
+    <div class="mb-3">
+      <span class="hero-badge"><i class="fas fa-brain me-1"></i> Deep Learning · CNN</span>
+    </div>
+    <h1 class="hero-title">Klasifikasi Motif Batik<br>Indonesia</h1>
+    <p class="hero-subtitle mt-3">Unggah gambar batik dan biarkan AI mengenali motifnya<br>menggunakan Convolutional Neural Network</p>
+  </div>
+</section>
+
+<div class="container" style="max-width:800px;">
+
+  <!-- Alert jika model belum siap -->
+  {% if not model_ready %}
+  <div class="alert-model p-4 mt-4">
+    <h5><i class="fas fa-exclamation-triangle me-2"></i>Model Belum Tersedia</h5>
+    <p class="mb-2">Jalankan perintah berikut di terminal untuk melatih model terlebih dahulu:</p>
+    <code class="bg-dark text-warning px-3 py-2 rounded d-block">python train_model.py</code>
+    <p class="mt-2 mb-0 small">Pastikan dataset sudah disiapkan di folder <code>dataset/</code></p>
+  </div>
+  {% endif %}
+
+  <!-- Upload Card -->
+  <div class="upload-card p-4 p-md-5 mb-4">
+    <h4 class="fw-bold mb-4 text-center" style="color:var(--batik-brown);">
+      <i class="fas fa-cloud-upload-alt me-2"></i>Unggah Gambar Batik
+    </h4>
+
+    <form action="/predict" method="POST" enctype="multipart/form-data" id="uploadForm">
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div id="uploadPlaceholder">
+          <div class="upload-icon"><i class="fas fa-image"></i></div>
+          <h5 style="color:var(--batik-brown)">Klik atau seret gambar ke sini</h5>
+          <p class="text-muted mb-0">Format: JPG, PNG, JPEG, WEBP · Maks 16 MB</p>
+        </div>
+        <img id="previewImg" class="preview-img mx-auto d-block" src="" alt="Preview"/>
+      </div>
+      <input type="file" id="fileInput" name="file" accept="image/*" class="d-none" required/>
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-predict" id="predictBtn" {% if not model_ready %}disabled{% endif %}>
+          <i class="fas fa-search me-2"></i>Identifikasi Motif Batik
+        </button>
+        {% if not model_ready %}
+        <p class="text-muted small mt-2">Tombol aktif setelah model dilatih</p>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Info Motif Batik -->
+  <h5 class="fw-bold mb-3" style="color:var(--batik-brown);">
+    <i class="fas fa-info-circle me-2"></i>Motif Batik yang Dapat Dikenali
+  </h5>
+  <div class="row g-3 mb-5">
+    {% set motifs = [
+      ("⚔️", "Batik Parang", "Yogyakarta / Solo", "Simbol kekuatan & semangat tak terputus"),
+      ("🌀", "Batik Kawung", "Yogyakarta", "Simbol kesucian & keadilan"),
+      ("☁️", "Batik Mega Mendung", "Cirebon", "Simbol kesabaran & ketenangan"),
+      ("⭐", "Batik Truntum", "Solo", "Simbol cinta & kesetiaan"),
+      ("🌸", "Batik Sekar Jagad", "Solo & Yogyakarta", "Simbol keindahan & keberagaman")
+    ] %}
+    {% for emoji, nama, asal, makna in motifs %}
+    <div class="col-md-6">
+      <div class="batik-card card h-100">
+        <div class="card-header py-2">{{ emoji }} {{ nama }}</div>
+        <div class="card-body">
+          <p class="mb-1 small"><i class="fas fa-map-marker-alt me-1 text-warning"></i><strong>Asal:</strong> {{ asal }}</p>
+          <p class="mb-0 small text-muted">{{ makna }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="text-center">
+  <div class="container">
+    <p class="mb-1">🎨 Klasifikasi Motif Batik Indonesia · CNN · Flask</p>
+    <p class="mb-0 small">Teknik Informatika · Universitas Bale Bandung</p>
+  </div>
+</footer>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+  <div class="spinner-border text-warning" style="width:3rem;height:3rem;" role="status"></div>
+  <p class="text-white mt-3 fs-5">Menganalisis motif batik...</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const previewImg = document.getElementById('previewImg');
+  const placeholder = document.getElementById('uploadPlaceholder');
+  const dropZone = document.getElementById('dropZone');
+  const uploadForm = document.getElementById('uploadForm');
+
+  fileInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
+  });
+
+  // Drag & Drop
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      fileInput.files = e.dataTransfer.files;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        previewImg.src = ev.target.result;
+        previewImg.style.display = 'block';
+        placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  uploadForm.addEventListener('submit', () => {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+
+dataset/
+static/uploads/
+
+model/batik_model.h5
+
+.venv/
+venv/
+
+.DS_Store
+Thumbs.db
